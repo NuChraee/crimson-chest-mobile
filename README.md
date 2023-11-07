@@ -183,7 +183,7 @@ class ShopCard extends StatelessWidget {
    2. Bisa dibangun ulang: Widget ini dapat dibangun ulang ketika keadaan internalnya berubah, memungkinkan UI untuk memperbarui secara dinamis.
    3. Penggunaan: Digunakan untuk UI yang interaktif dan dinamis, seperti form input, animasi, atau apapun yang memerlukan pembaruan UI berdasarkan interaksi pengguna atau data yang berubah.
 
-## 
+## Seluruh widget yang digunakan untuk menyelesaikan tugas ini dan jelaskan fungsinya masing-masing
 
 1. `MaterialApp`: Widget kenyamanan yang membungkus sejumlah widget yang umumnya diperlukan untuk Material Design applications
 2. `ThemeData`: Widget untuk memanipulasi tema seluruh aplikasi yang dibuat.
