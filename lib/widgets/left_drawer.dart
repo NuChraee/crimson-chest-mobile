@@ -56,7 +56,7 @@ class LeftDrawer extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.checklist),
             title: const Text('Show Items'),
-            // Bagian redirection ke ShopFormPage
+            // Bagian redirection ke Item Page
             onTap: () {
               Navigator.pushReplacement(
                   context,
