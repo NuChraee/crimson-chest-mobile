@@ -8,6 +8,8 @@ berikut adalah link tugas:
 
 [Tugas 7](#Tugas-7)
 
+[Tugas 8](#Tugas-8)
+
 # Tugas 7
 
 ## Implementasi Checklist
@@ -201,6 +203,7 @@ class ShopCard extends StatelessWidget {
 14. `SnackBar`: Widget berupa pesan ringan dengan tindakan opsional yang ditampilkan secara singkat di bagian bawah layar.
 
 # Tugas 8
+
 ## Implementasi Checklist
 
 1. Buka proyek yang sebelumnya telah dibuat pada tugas 7
@@ -1015,7 +1018,7 @@ Align(
             },
           ),
       ```
-      
+
 ## Perbedaan antara Navigator.push() dan Navigator.pushReplacement() di Flutter
 
 1. Navigator.push():
