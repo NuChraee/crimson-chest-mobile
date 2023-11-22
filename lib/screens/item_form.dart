@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:crimson_chest_mobile/widgets/left_drawer.dart';
-import 'package:crimson_chest_mobile/widgets/menu_card.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:provider/provider.dart';
+import 'dart:convert';
+import 'package:crimson_chest_mobile/screens/menu.dart';
 
 class ItemFormPage extends StatefulWidget {
   const ItemFormPage({super.key});
@@ -9,29 +12,29 @@ class ItemFormPage extends StatefulWidget {
   State<ItemFormPage> createState() => _ItemFormPageState();
 }
 
-List<Item> items = [];
-
 class _ItemFormPageState extends State<ItemFormPage> {
   final _formKey = GlobalKey<FormState>();
   String _name = "";
-  String _category = "";
-  int _amount = 0;
   String _modifiers = "";
+  int _amount = 0;
   int _price = 0;
   String _description = "";
 
   @override
   Widget build(BuildContext context) {
+    final request = context.watch<CookieRequest>();
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Add Your Item',
+        title: const Center(
+          child: const Text(
+            'Add Item',
+            style: TextStyle(color: Colors.white),
+          ),
         ),
-        backgroundColor: Colors.indigo,
+        backgroundColor: Colors.indigo.shade900,
         foregroundColor: Colors.white,
       ),
-
-      // Menambahkan drawer yang sudah dibuat di sini
       drawer: const LeftDrawer(),
       body: Form(
         key: _formKey,
@@ -71,26 +74,26 @@ class _ItemFormPageState extends State<ItemFormPage> {
               padding: const EdgeInsets.all(8.0),
               child: TextFormField(
                 decoration: InputDecoration(
-                  hintText: "Category",
-                  labelText: "Category",
+                  hintText: "Modifiers",
+                  labelText: "Modifiers",
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(5.0),
                   ),
                 ),
                 onChanged: (String? value) {
                   setState(() {
-                    _category = value!;
+                    _modifiers = value!;
                   });
                 },
                 onSaved: (String? value) {
                   setState(() {
                     // Menambahkan variabel yang sesuai
-                    _category = value!;
+                    _modifiers = value!;
                   });
                 },
                 validator: (String? value) {
                   if (value == null || value.isEmpty) {
-                    return "Category cannot be empty!";
+                    return "Modifiers cannot be empty!";
                   }
                   return null;
                 },
@@ -117,36 +120,6 @@ class _ItemFormPageState extends State<ItemFormPage> {
                   }
                   if (int.tryParse(value) == null) {
                     return "Amount must be a valid integer!";
-                  }
-                  return null;
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextFormField(
-                decoration: InputDecoration(
-                  hintText: "Modifiers",
-                  labelText: "Modifiers",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(5.0),
-                  ),
-                ),
-                onChanged: (String? value) {
-                  setState(() {
-                    // Menambahkan variabel yang sesuai
-                    _modifiers = value!;
-                  });
-                },
-                onSaved: (String? value) {
-                  setState(() {
-                    // Menambahkan variabel yang sesuai
-                    _modifiers = value!;
-                  });
-                },
-                validator: (String? value) {
-                  if (value == null || value.isEmpty) {
-                    return "Description cannot be empty!";
                   }
                   return null;
                 },
@@ -216,47 +189,35 @@ class _ItemFormPageState extends State<ItemFormPage> {
                   style: ButtonStyle(
                     backgroundColor: MaterialStateProperty.all(Colors.indigo),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     if (_formKey.currentState!.validate()) {
-                      items.add(Item(
-                        name: _name,
-                        category: _category,
-                        amount: _amount,
-                        modifiers: _modifiers,
-                        price: _price,
-                        description: _description,
-                      ));
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            title: const Text('Item saved successfully'),
-                            content: SingleChildScrollView(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Memunculkan value-value lainnya
-                                  Text('Name: $_name'),
-                                  Text('Category: $_category'),
-                                  Text('Amount: $_amount'),
-                                  Text('Modifiers: $_modifiers'),
-                                  Text('Price: $_price Gold'),
-                                  Text('Description: $_description')
-                                ],
-                              ),
-                            ),
-                            actions: [
-                              TextButton(
-                                child: const Text('OK'),
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                      _formKey.currentState!.reset();
+                      // Kirim ke Django dan tunggu respons
+                      // DONE: Ganti URL dan jangan lupa tambahkan trailing slash (/) di akhir URL!
+                      final response = await request.postJson(
+                          "http://localhost:8000/create-flutter/",
+                          jsonEncode(<String, String>{
+                            'name': _name,
+                            'modifiers': _modifiers,
+                            'amount': _amount.toString(),
+                            'price': _price.toString(),
+                            'description': _description,
+                          }));
+                      if (response['status'] == 'success') {
+                        print(response['status']);
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(const SnackBar(
+                          content: Text("New item has been saved!"),
+                        ));
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => MyHomePage()),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(const SnackBar(
+                          content: Text("ERROR, please try again!"),
+                        ));
+                      }
                     }
                   },
                   child: const Text(

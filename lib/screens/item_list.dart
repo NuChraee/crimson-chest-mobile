@@ -1,118 +1,96 @@
-import 'package:crimson_chest_mobile/widgets/menu_card.dart';
-import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:crimson_chest_mobile/screens/ItemDetailPage.dart';
+import 'package:http/http.dart' as http;
+import 'package:crimson_chest_mobile/models/product.dart';
 import 'package:crimson_chest_mobile/widgets/left_drawer.dart';
-import 'package:crimson_chest_mobile/screens/item_form.dart';
-
-// Assuming 'items' is a list of 'Item' objects as defined in your code
+import 'package:flutter/material.dart';
 
 class ItemsPage extends StatefulWidget {
-  const ItemsPage({super.key});
+  const ItemsPage({Key? key}) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() => _ItemsPageState();
+  _ItemsPageState createState() => _ItemsPageState();
 }
 
 class _ItemsPageState extends State<ItemsPage> {
+  Future<List<Product>> fetchProduct() async {
+    // TODO: Ganti URL dan jangan lupa tambahkan trailing slash (/) di akhir URL!
+    var url = Uri.parse('http://localhost:8000/json/');
+    var response = await http.get(
+      url,
+      headers: {"Content-Type": "application/json"},
+    );
+
+    // melakukan decode response menjadi bentuk json
+    var data = jsonDecode(utf8.decode(response.bodyBytes));
+
+    // melakukan konversi data json menjadi object Product
+    List<Product> listProduct = [];
+    for (var d in data) {
+      if (d != null) {
+        listProduct.add(Product.fromJson(d));
+      }
+    }
+    return listProduct;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Items Gallery'),
-        backgroundColor: Colors.green, // Consider using a Theme for consistency
-        actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              // TODO: Implement search functionality
-            },
-          ),
-        ],
+        title: const Text('Product'),
       ),
-      drawer: const LeftDrawer(), // Consistent drawer usage
-      body: GridView.builder(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2, // Two items per row
-          crossAxisSpacing: 10, // Horizontal spacing
-          mainAxisSpacing: 10, // Vertical spacing
-        ),
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          final item = items[index];
-          return ItemTile(
-              item: item, onTap: () => _showModalBottomSheet(context, item));
+      drawer: const LeftDrawer(),
+      body: FutureBuilder(
+        future: fetchProduct(),
+        builder: (context, AsyncSnapshot snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return const Center(child: Text('Error fetching products'));
+          } else if (snapshot.hasData) {
+            return ListView.separated(
+              itemCount: snapshot.data!.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 10),
+              itemBuilder: (context, index) {
+                final product = snapshot.data![index];
+                return InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ItemDetailPage(item: product),
+                      ),
+                    );
+                  },
+                  child: Card(
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    elevation: 4.0,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            product.fields.name,
+                            style: Theme.of(context).textTheme.headline6,
+                          ),
+                          const SizedBox(height: 8),
+                          Text("Price: \$${product.fields.price}"),
+                          const SizedBox(height: 8),
+                          Text("Description: ${product.fields.description}"),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            );
+          } else {
+            return const Center(child: Text('No products found'));
+          }
         },
-      ),
-    );
-  }
-
-  void _showModalBottomSheet(BuildContext context, Item item) {
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return Container(
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Text(item.name,
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 10),
-              Text("Category: ${item.category}"),
-              Text("Amount: ${item.amount}"),
-              Text("Price: ${item.price} Gold"),
-              Text("Modifiers: ${item.modifiers}"),
-              Text("Description: ${item.description}"),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                child: const Text('Close'),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class ItemTile extends StatelessWidget {
-  final Item item;
-  final VoidCallback onTap;
-
-  const ItemTile({Key? key, required this.item, required this.onTap})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey,
-              blurRadius: 5,
-              offset: Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.inventory,
-                size: 50, color: Colors.green), // Consider using dynamic icons
-            Text(
-              item.name,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.black54,
-              ),
-            ),
-            Text("${item.price} Gold"),
-          ],
-        ),
       ),
     );
   }
